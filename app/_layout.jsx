@@ -5,7 +5,7 @@ export default function RootLayout() {
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: "#767673",
+          backgroundColor: "#e0770f",
         },
         headerTintColor: "#fff",
         headerTitleStyle: {
@@ -20,6 +20,7 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: "Home" }} />
+      <Stack.Screen name="notes" options={{ headerTitle: "Notes" }} />
     </Stack>
   );
 }
