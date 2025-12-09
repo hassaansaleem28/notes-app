@@ -1,14 +1,31 @@
+import * as Appwrite from "appwrite";
 import { databases } from "./appwrite";
 
 const databaseService = {
-  async listNotes(dbId, tableId) {
+  // LIST DOCUMENTS
+  async listDocuments(dbId, tableId) {
     try {
-      console.log(databases);
-      // const response = await databases.listDocuments(dbId, tableId);
-      // console.log(response);
-      // return response.documents || [];
+      const response = await databases.listDocuments(dbId, tableId, [
+        Appwrite.Query.limit(1000),
+        Appwrite.Query.orderDesc("$createdAt"),
+      ]);
+      return response.documents || [];
     } catch (error) {
       console.error("Error in fetching Documents", error.message);
+      return { error: error.message };
+    }
+  },
+  // CREATE DOCUMENTS
+  async createDocument(dbId, tableId, id = null, data) {
+    try {
+      return await databases.createDocument(
+        dbId,
+        tableId,
+        id ?? "unique()",
+        data
+      );
+    } catch (error) {
+      console.error("Error creating document:", error.message);
       return { error: error.message };
     }
   },

@@ -3,7 +3,7 @@ import NoteItem from "./NoteItem";
 
 function NoteList({ notes }) {
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <FlatList
         data={notes}
         keyExtractor={item => item.$id}

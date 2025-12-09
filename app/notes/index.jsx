@@ -15,7 +15,6 @@ export default function NotesScreen() {
     async function loadNotes() {
       setLoading(true);
       const response = await notesService.fetchNotes();
-      console.log(response);
       if (response.error) {
         setError(response.error);
         Alert.alert("Error", response.error);
@@ -28,12 +27,15 @@ export default function NotesScreen() {
     loadNotes();
   }, []);
 
-  function addNote() {
+  async function addNote() {
     if (newNote.trim() === "") return;
-    setNotes(prevNotes => [
-      ...prevNotes,
-      { id: Date.now().toString(), content: newNote },
-    ]);
+
+    const response = await notesService.createNote(newNote);
+    if (response.error) {
+      Alert.alert("Error", response.error);
+    } else {
+      setNotes([...notes, response.data]);
+    }
     setNewNote("");
     setModalVisible(false);
   }
