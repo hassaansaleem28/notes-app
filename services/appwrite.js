@@ -1,4 +1,4 @@
-import { Client, Databases } from "appwrite";
+import { Account, Client, Databases } from "appwrite";
 
 const config = {
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
@@ -13,5 +13,6 @@ const client = new Client()
   .setProject(config.projectId);
 
 const databases = new Databases(client);
+const account = new Account(client);
 
-export { client, config, databases };
+export { account, client, config, databases };

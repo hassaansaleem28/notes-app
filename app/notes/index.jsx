@@ -1,5 +1,7 @@
 import AddNoteModal from "@/components/AddNoteModal";
+import { useAuth } from "@/contexts/AuthContext";
 import notesService from "@/services/notesService";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,19 +14,32 @@ import {
 import NoteList from "../../components/NoteList";
 
 export default function NotesScreen() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [notes, setNotes] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(function () {
-    loadNotes();
-  }, []);
+  useEffect(
+    function () {
+      if (!user && !authLoading) {
+        router.replace("/auth");
+      }
+    },
+    [user, authLoading]
+  );
+  useEffect(
+    function () {
+      if (user) loadNotes();
+    },
+    [user]
+  );
 
   async function loadNotes() {
     setLoading(true);
-    const response = await notesService.fetchNotes();
+    const response = await notesService.fetchNotes(user.$id);
     if (response.error) {
       setError(response.error);
       Alert.alert("Error", response.error);
@@ -38,7 +53,7 @@ export default function NotesScreen() {
   async function addNote() {
     if (newNote.trim() === "") return;
 
-    const response = await notesService.createNote(newNote);
+    const response = await notesService.createNote(newNote, user.$id);
     if (response.error) {
       Alert.alert("Error", response.error);
     } else {
@@ -49,40 +64,55 @@ export default function NotesScreen() {
     setModalVisible(false);
   }
 
-  // async function deleteNote(noteId) {
-  //   Alert.alert("Delete Note", "Are you sure you want to delete this note?", [
-  //     {
-  //       text: "Cancel",
-  //       style: "cancel",
-  //     },
-  //     {
-  //       text: "Delete",
-  //       style: "destructive",
-  //       onPress: async () => {
-  //         const response = await notesService.deleteNote(noteId);
-  //         if (response.error) {
-  //           Alert.alert("Error", response.error);
-  //         } else {
-  //           setNotes(notes.filter(note => note.$id !== noteId));
-  //         }
-  //       },
-  //     },
-  //   ]);
-  // }
   async function deleteNote(noteId) {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this note?"
-    );
-    if (!confirmed) return;
+    Alert.alert("Delete Note", "Are you sure you want to delete this note?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const response = await notesService.deleteNote(noteId);
+          if (response.error) {
+            Alert.alert("Error", response.error);
+          } else {
+            setNotes(notes.filter(note => note.$id !== noteId));
+          }
+        },
+      },
+    ]);
+  }
+  // async function deleteNote(noteId) {
+  //   const confirmed = window.confirm(
+  //     "Are you sure you want to delete this note?"
+  //   );
+  //   if (!confirmed) return;
 
-    const response = await notesService.deleteNote(noteId);
+  //   const response = await notesService.deleteNote(noteId);
+  //   if (response.error) {
+  //     alert("Error: " + response.error);
+  //   } else {
+  //     setNotes(notes.filter(note => note.$id !== noteId));
+  //   }
+  // }
+  async function editNote(noteId, newText) {
+    if (!newText || newText.trim() === "") {
+      Alert.alert("Error", "Note text cannot be empty.");
+      return;
+    }
+    const response = await notesService.updateNote(noteId, newText);
     if (response.error) {
-      alert("Error: " + response.error);
+      Alert.alert("Error", response.error);
     } else {
-      setNotes(notes.filter(note => note.$id !== noteId));
+      setNotes(prevNotes =>
+        prevNotes.map(note =>
+          note.$id === noteId ? { ...note, text: response.data.text } : note
+        )
+      );
     }
   }
-  async function editNote(noteId, newText) {}
 
   return (
     <View style={styles.container}>
@@ -91,7 +121,13 @@ export default function NotesScreen() {
       ) : (
         <>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <NoteList notes={notes} onDelete={deleteNote} onEdit={editNote} />
+          {notes.length === 0 ? (
+            <Text style={styles.noNotesText}>
+              No notes available. Add a note to get started!
+            </Text>
+          ) : (
+            <NoteList notes={notes} onDelete={deleteNote} onEdit={editNote} />
+          )}
         </>
       )}
       <TouchableOpacity
@@ -138,5 +174,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
     fontSize: 16,
+  },
+  noNotesText: {
+    textAlign: "center",
+    fontWeight: "500",
+    fontSize: 18,
+    color: "#555",
+    marginTop: 15,
   },
 });

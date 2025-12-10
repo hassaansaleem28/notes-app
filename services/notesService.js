@@ -1,19 +1,27 @@
-import { ID } from "appwrite";
+import { ID, Query } from "appwrite";
 import databaseService from "./databaseService";
 
 const dbId = process.env.EXPO_PUBLIC_APPWRITE_DB_ID;
 const tableId = process.env.EXPO_PUBLIC_APPWRITE_TABLE_NOTES_ID;
 
 const notesService = {
-  async fetchNotes() {
-    const response = await databaseService.listDocuments(dbId, tableId);
-    if (response.error) {
-      return { error: response.error };
+  async fetchNotes(user_id) {
+    if (!user_id) {
+      console.error("User ID is required to fetch notes");
+      return { data: [], error: "User Id is missing!" };
     }
-    return { data: response };
+    try {
+      const response = await databaseService.listDocuments(dbId, tableId, [
+        Query.equal("user_id", user_id),
+      ]);
+      return response;
+    } catch (error) {
+      console.log("Error fetching notes: ", error.message);
+      return { data: [], error: error.message };
+    }
   },
 
-  async createNote(text) {
+  async createNote(text, user_id) {
     if (!text || text.trim() === "") {
       return { error: "Note text cannot be empty." };
     }
@@ -21,7 +29,7 @@ const notesService = {
       dbId,
       tableId,
       ID.unique(),
-      { text }
+      { text, user_id }
     );
     if (response.error) {
       return { error: response.error };

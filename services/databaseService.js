@@ -3,13 +3,10 @@ import { databases } from "./appwrite";
 
 const databaseService = {
   // LIST DOCUMENTS
-  async listDocuments(dbId, tableId) {
+  async listDocuments(dbId, tableId, queries = []) {
     try {
-      const response = await databases.listDocuments(dbId, tableId, [
-        Appwrite.Query.limit(1000),
-        Appwrite.Query.orderDesc("$createdAt"),
-      ]);
-      return response.documents || [];
+      const response = await databases.listDocuments(dbId, tableId, queries);
+      return { data: response.documents || [], error: null };
     } catch (error) {
       console.error("Error in fetching Documents", error.message);
       return { error: error.message };
